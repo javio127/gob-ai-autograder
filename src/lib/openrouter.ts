@@ -244,7 +244,10 @@ export async function generateRubricWithExplanation(input: {
   desiredType: 'vision_numeric' | 'vision_one_of' | 'vision_text';
   model?: string;
 }): Promise<{ rubric: RubricJson; explanation: string }> {
-  const model = input.model || process.env.OPENROUTER_RUBRIC_MODEL || process.env.OPENROUTER_VISION_MODEL || 'meta-llama/llama-3.2-90b-vision-instruct';
+  const model = input.model
+    || (process.env.OPENAI_API_KEY
+          ? (process.env.OPENAI_RUBRIC_MODEL || process.env.OPENAI_VISION_MODEL || 'gpt-4o-2024-08-06')
+          : (process.env.OPENROUTER_RUBRIC_MODEL || process.env.OPENROUTER_VISION_MODEL || 'meta-llama/llama-3.2-90b-vision-instruct'));
   const system = 'You produce a grading rubric and a short explanation for teachers. Return strict JSON only.';
   const user = `For the following student-facing problem, suggest a compact rubric JSON (same schema as before) and a brief explanation (2-4 bullet points) describing how the AI will grade (what evidence it looks for, how partial credit applies). Desired type: ${input.desiredType}. Problem: ${input.promptText}`;
 
@@ -275,7 +278,7 @@ export async function generateRubricWithExplanation(input: {
     temperature: 0
   } as any;
 
-  const res = await fetch(OPENROUTER_URL, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+  const res = await fetch(RESPONSES_URL, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`OpenRouter error: ${res.status} ${text}`);
