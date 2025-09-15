@@ -4,6 +4,8 @@ import { useParams, useRouter } from 'next/navigation';
 
 export default function StartPage() {
   const params = useParams<{ id: string }>();
+  const rawId = (params as any)?.id;
+  const assignmentId = Array.isArray(rawId) ? (rawId[0] as string) : (rawId as string | undefined) || '';
   const router = useRouter();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -11,11 +13,12 @@ export default function StartPage() {
   async function join() {
     setLoading(true);
     try {
-      const res = await fetch('/api/join-as-student', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assignmentId: params.id, displayName: name }) });
+      if (!assignmentId) return;
+      const res = await fetch('/api/join-as-student', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assignmentId, displayName: name }) });
       const json = await res.json();
       if (res.ok) {
-        sessionStorage.setItem(`student:${params.id}`, json.studentId);
-        router.push(`/assignment/${params.id}/p/1`);
+        sessionStorage.setItem(`student:${assignmentId}`, json.studentId);
+        router.push(`/assignment/${assignmentId}/p/1`);
       } else {
         alert(json.error || 'Join failed');
       }
