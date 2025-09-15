@@ -3,15 +3,24 @@ import { useParams } from 'next/navigation';
 
 export default function SharePage() {
   const params = useParams<{ id: string }>();
-  const startUrl = typeof window !== 'undefined' ? `${window.location.origin}/assignment/${params.id}/start` : '';
+  const base = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  const universal = `${base}/?a=${params.id}`;
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Share Link</h1>
-      <div className="rounded border bg-white p-4">
-        <div className="text-sm">Student start link:</div>
-        <div className="mt-2 flex gap-2">
-          <input className="w-full rounded border p-2" value={startUrl} readOnly />
-          <button className="rounded bg-black px-3 py-2 text-white" onClick={() => navigator.clipboard.writeText(startUrl)}>Copy</button>
+      <h1 className="text-xl font-semibold">Share</h1>
+      <div className="rounded-xl border bg-white p-4 space-y-3">
+        <div className="text-sm text-gray-700">Give students this single link. They’ll enter their name and start on Problem 1.</div>
+        <div className="mt-1 flex gap-2">
+          <input className="w-full rounded border p-2" value={universal} readOnly />
+          <button className="btn-primary" onClick={() => navigator.clipboard.writeText(universal)}>Copy</button>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-white p-4">
+        <div className="text-sm text-gray-700">Next step</div>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm text-gray-600">Once students submit, open the Report to monitor scores.</div>
+          <a href={`/assignment/${params.id}/report`} className="btn-secondary">Open Report</a>
         </div>
       </div>
     </div>

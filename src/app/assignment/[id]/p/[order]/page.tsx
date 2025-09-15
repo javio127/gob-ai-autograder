@@ -11,6 +11,7 @@ export default function ProblemPage() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [current, setCurrent] = useState<Problem | null>(null);
   const [notes, setNotes] = useState('');
+  const [finalAnswer, setFinalAnswer] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
 
@@ -34,8 +35,12 @@ export default function ProblemPage() {
         alert('Please Save PNG first');
         return;
       }
+      if (!finalAnswer.trim()) {
+        setStatus('Please enter your final answer before submitting.');
+        return;
+      }
       setStatus('Submitting…');
-      const res1 = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ problemId: current!.id, studentId, workText: notes, answerImageUrl: imageUrl }) });
+      const res1 = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ problemId: current!.id, studentId, workText: notes, finalAnswerText: finalAnswer, answerImageUrl: imageUrl }) });
       const j1 = await res1.json();
       if (!res1.ok) throw new Error(j1.error || 'Submit failed');
       setStatus('Grading…');
@@ -44,7 +49,7 @@ export default function ProblemPage() {
       if (!res2.ok) throw new Error(j2.error || 'Grade failed');
       setStatus(`You scored ${j2.score}/${j2.max}.`);
     } catch (e: any) {
-      setStatus('We’re processing your submission; your teacher will see the score shortly.');
+      setStatus('We’re processing your submission; your teacher will see the score shortly. You can continue to the next problem.');
     }
   }
 
@@ -62,19 +67,29 @@ export default function ProblemPage() {
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-600">Problem {current.order}</div>
-      <div className="rounded border bg-white p-4">
+      <div className="rounded-xl border bg-white p-4">
         <div className="font-medium">{current.prompt_text}</div>
       </div>
       <Whiteboard assignmentId={params.id} studentId={studentId || 'unknown'} problemId={current.id} onSaved={setImageUrl} />
-      <div className="rounded border bg-white p-4 space-y-2">
+      <div className="rounded border bg-blue-50 p-3 text-xs text-blue-900">
+        Tip: clearly mark your final answer. Write “Final: …” and box it so it’s easy to read. Then press Save PNG before Submit.
+      </div>
+      <div className="rounded-xl border bg-white p-4 space-y-2">
         <label className="block text-sm font-medium">Optional notes</label>
         <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full rounded border p-2" rows={3} />
+        <label className="mt-3 block text-sm font-medium">Final answer (required)</label>
+        <input value={finalAnswer} onChange={e => setFinalAnswer(e.target.value)} className="w-full rounded border p-2" placeholder="e.g., 10 or sqrt(2)/2" />
       </div>
       <div className="flex gap-3">
-        <button onClick={submit} className="rounded bg-black px-3 py-2 text-white">Submit</button>
-        <button onClick={next} className="rounded border px-3 py-2">Next</button>
+        <button onClick={submit} className="btn-primary">Submit</button>
+        <button onClick={next} className="btn-secondary">Next</button>
       </div>
-      {status && <div className="text-sm text-gray-700">{status}</div>}
+      {status && (
+        <div className="flex items-center gap-3 text-sm text-gray-700">
+          <span>{status}</span>
+          <button onClick={next} className="btn-secondary">Next problem</button>
+        </div>
+      )}
       <div className="rounded border bg-yellow-50 p-3 text-xs">AI feedback is OFF; you’ll see your score after submit.</div>
     </div>
   );

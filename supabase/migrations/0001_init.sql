@@ -45,6 +45,8 @@ create table if not exists public.grades (
 create index if not exists assignments_teacher_idx on public.assignments (teacher_id);
 create index if not exists problems_assignment_order_idx on public.problems (assignment_id, "order");
 create index if not exists submissions_problem_student_idx on public.submissions (problem_id, student_id);
+-- Enforce one submission per student per problem for MVP
+create unique index if not exists submissions_unique_problem_student on public.submissions (problem_id, student_id);
 create index if not exists grades_submission_idx on public.grades (submission_id);
 
 

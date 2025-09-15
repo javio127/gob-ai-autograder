@@ -15,19 +15,31 @@ export default function Whiteboard({ width = 800, height = 500, onSaved, assignm
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
+  const [penWidth, setPenWidth] = useState(3);
+  const [eraserWidth, setEraserWidth] = useState(18);
   const [isDrawing, setIsDrawing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
+    const dpr = window.devicePixelRatio || 1;
+    // Set a higher resolution backing store for crisper PNGs
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
     const ctx = canvas.getContext('2d')!;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctxRef.current = ctx;
     ctx.lineCap = 'round';
     ctx.lineWidth = 3;
     ctx.strokeStyle = '#111827';
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }, []);
+    ctx.fillRect(0, 0, width, height);
+  }, [width, height]);
 
   function getPos(e: React.MouseEvent | React.TouchEvent) {
     const canvas = canvasRef.current!;
@@ -49,6 +61,7 @@ export default function Whiteboard({ width = 800, height = 500, onSaved, assignm
     const { x, y } = getPos(e);
     const ctx = ctxRef.current!;
     ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.lineWidth = tool === 'eraser' ? eraserWidth : penWidth;
     ctx.lineTo(x, y);
     ctx.stroke();
   }
@@ -87,10 +100,16 @@ export default function Whiteboard({ width = 800, height = 500, onSaved, assignm
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
-        <button className={`rounded border px-3 py-1 ${tool === 'pen' ? 'bg-black text-white' : 'bg-white'}`} onClick={() => setTool('pen')}>Pen</button>
-        <button className={`rounded border px-3 py-1 ${tool === 'eraser' ? 'bg-black text-white' : 'bg-white'}`} onClick={() => setTool('eraser')}>Eraser</button>
-        <button disabled={saving} className="rounded bg-emerald-600 px-3 py-1 text-white disabled:opacity-50" onClick={handleSave}>{saving ? 'Saving…' : 'Save PNG'}</button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button className={`btn-secondary ${tool === 'pen' ? '!bg-brandGreen !text-white !border-brandGreen' : ''}`} onClick={() => setTool('pen')}>Pen</button>
+        <button className={`btn-secondary ${tool === 'eraser' ? '!bg-brandGreen !text-white !border-brandGreen' : ''}`} onClick={() => setTool('eraser')}>Eraser</button>
+        <button disabled={saving} className="btn-primary" onClick={handleSave}>{saving ? 'Saving…' : 'Save PNG'}</button>
+        <div className="ml-2 flex items-center gap-2 text-xs text-gray-600">
+          <label>Pen</label>
+          <input type="range" min={2} max={12} value={penWidth} onChange={(e) => setPenWidth(Number(e.target.value))} />
+          <label>Eraser</label>
+          <input type="range" min={10} max={40} value={eraserWidth} onChange={(e) => setEraserWidth(Number(e.target.value))} />
+        </div>
       </div>
       <canvas
         ref={canvasRef}

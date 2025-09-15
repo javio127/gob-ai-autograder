@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createAssignment } from '@/lib/db';
+import { getServiceClient } from '@/lib/supabase';
 
 // For demo: create an assignment for a demo teacher if query ?demoCreate=1
 const DEMO_TEACHER_ID = '11111111-1111-1111-1111-111111111111';
@@ -20,6 +21,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const id = await createAssignment(DEMO_TEACHER_ID, 'Demo Assignment');
       return res.status(200).json({ id });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  if (req.method === 'GET') {
+    try {
+      const supa = getServiceClient();
+      const { data, error } = await supa
+        .from('assignments')
+        .select('id, title, created_at')
+        .eq('teacher_id', DEMO_TEACHER_ID)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return res.status(200).json({ assignments: data || [] });
     } catch (e: any) {
       return res.status(500).json({ error: e.message });
     }

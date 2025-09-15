@@ -26,11 +26,11 @@ export default function StartPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded border bg-yellow-50 p-4 text-sm">Heads up: AI feedback is OFF. You’ll see your score after submit. Use the whiteboard to show your work.</div>
+      <div className="rounded-xl border bg-yellow-50 p-4 text-sm">Heads up: AI feedback is OFF. You’ll see your score after submit. Use the whiteboard to show your work.</div>
       <div className="rounded border bg-white p-4 space-y-3">
         <label className="block text-sm font-medium">Your name</label>
         <input value={name} onChange={e => setName(e.target.value)} className="w-full rounded border p-2" placeholder="e.g., Ana" />
-        <button disabled={!name.trim() || loading} onClick={join} className="rounded bg-black px-3 py-2 text-white disabled:opacity-50">Start</button>
+        <button disabled={!name.trim() || loading} onClick={join} className="btn-primary">Start</button>
       </div>
     </div>
   );
