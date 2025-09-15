@@ -8,6 +8,12 @@ type Problem = { id: string; order: number; prompt_text: string };
 export default function ProblemPage() {
   const params = useParams<{ id: string; order: string }>();
   const router = useRouter();
+  // Guard params for build-time type safety
+  const rawId = (params as any)?.id;
+  const rawOrder = (params as any)?.order;
+  const assignmentId = Array.isArray(rawId) ? (rawId[0] as string) : (rawId as string | undefined) || '';
+  const orderStr = Array.isArray(rawOrder) ? (rawOrder[0] as string) : (rawOrder as string | undefined) || '';
+  const orderNum = Number(orderStr) || 0;
   const [problems, setProblems] = useState<Problem[]>([]);
   const [current, setCurrent] = useState<Problem | null>(null);
   const [notes, setNotes] = useState('');
@@ -15,19 +21,20 @@ export default function ProblemPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
 
-  const studentId = typeof window !== 'undefined' ? sessionStorage.getItem(`student:${params.id}`) : null;
+  const studentId = typeof window !== 'undefined' && assignmentId ? sessionStorage.getItem(`student:${assignmentId}`) : null;
 
   useEffect(() => {
     async function load() {
-      const res = await fetch(`/api/report?assignmentId=${params.id}`);
+      if (!assignmentId) return;
+      const res = await fetch(`/api/report?assignmentId=${assignmentId}`);
       const json = await res.json();
       const probs = json.problems as Problem[];
       setProblems(probs);
-      const cur = probs.find(p => p.order === Number(params.order)) || null;
+      const cur = probs.find(p => p.order === orderNum) || null;
       setCurrent(cur);
     }
     load();
-  }, [params.id, params.order]);
+  }, [assignmentId, orderNum]);
 
   async function submit() {
     try {
@@ -56,9 +63,9 @@ export default function ProblemPage() {
   function next() {
     const idx = problems.findIndex(p => p.id === current?.id);
     if (idx >= 0 && idx < problems.length - 1) {
-      router.push(`/assignment/${params.id}/p/${problems[idx + 1].order}`);
+      router.push(`/assignment/${assignmentId}/p/${problems[idx + 1].order}`);
     } else {
-      router.push(`/assignment/${params.id}/report`);
+      router.push(`/assignment/${assignmentId}/report`);
     }
   }
 
@@ -70,7 +77,7 @@ export default function ProblemPage() {
       <div className="rounded-xl border bg-white p-4">
         <div className="font-medium">{current.prompt_text}</div>
       </div>
-      <Whiteboard assignmentId={params.id} studentId={studentId || 'unknown'} problemId={current.id} onSaved={setImageUrl} />
+      <Whiteboard assignmentId={assignmentId} studentId={studentId || 'unknown'} problemId={current.id} onSaved={setImageUrl} />
       <div className="rounded border bg-blue-50 p-3 text-xs text-blue-900">
         Tip: clearly mark your final answer. Write “Final: …” and box it so it’s easy to read. Then press Save PNG before Submit.
       </div>
