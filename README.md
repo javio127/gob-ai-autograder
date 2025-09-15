@@ -1,11 +1,11 @@
-# Goblins Auto-Grader (Vision-Only) — MVP
+# Goblins Auto-Grader — MVP
 
 This app lets a teacher create an assignment (1–N problems), auto-generate & edit an LLM rubric, share a link with students, and view a report of scores. A student opens the link, solves on a whiteboard (pen/eraser), presses Submit & Next, gets a score per problem, and finishes. Grading uses a vision model on the saved PNG plus the rubric (no live AI tutoring). Everything persists in Supabase; deploy on Vercel. This creates repeat value for free-tier users without cannibalizing premium real-time feedback.
 
 ## Tech Stack
 - Next.js (App Router, TypeScript, Tailwind)
 - Supabase: Postgres + Storage (bucket: `submission-images`)
-- OpenRouter: vision model with structured JSON output
+- OpenAI Responses API: vision model with structured JSON output (gpt-4o-2024-08-06)
 - Hosted on Vercel
 
 ## Environment
@@ -15,11 +15,15 @@ Create `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
-OPENROUTER_API_KEY=...
+OPENAI_API_KEY=...
 
-# Optional models
-OPENROUTER_VISION_MODEL=meta-llama/llama-3.2-90b-vision-instruct
-OPENROUTER_RUBRIC_MODEL=meta-llama/llama-3.2-90b-vision-instruct
+# Optional
+OPENAI_VISION_MODEL=gpt-4o-2024-08-06
+# If you re-enable rubric AI generation
+OPENAI_RUBRIC_MODEL=gpt-4o-2024-08-06
+
+# For generating student share links in the UI
+NEXT_PUBLIC_BASE_URL=https://your-app.vercel.app
 ```
 
 ## Database Migration
@@ -108,7 +112,7 @@ Create bucket `submission-images`. For MVP, set to public (or keep private and r
 
 ## User Journeys
 - Teacher: Dashboard → New Assignment → Add problems → Generate Rubric (LLM) → Save → Share link → Report (scores + thumbnails + rationale); Download CSV.
-- Student: Start (name) → Problem page: Whiteboard (Pen/Eraser/Save) → Submit & Next → sees score → Finish → Totals.
+- Student: Start (name) → Problem page: Whiteboard (Pen/Eraser/Save) + type final answer → Submit & Next → sees score → Finish → Totals.
 
 Student banner copy: “Heads up: AI feedback is OFF. You’ll see your score after submit. Use the whiteboard to show your work.”
 
@@ -136,7 +140,7 @@ Console-level or DB events: `assignment_created`, `rubric_generated`, `student_j
 - Teacher can create assignment, add ≥1 problem, generate & edit a rubric
 - Student can join via link, draw on whiteboard, submit, and see a score
 - Teacher can open Report elsewhere and see persisted scores + PNG thumbnails + rationale
-- Rubric & grading use a vision model via OpenRouter with structured JSON
+- Rubric & grading use a vision model via OpenAI Responses API with strict JSON schema
 - Deployed on Vercel; README documents env, schema, journeys, API, and acceptance criteria
 
 ## Develop & Deploy
@@ -145,6 +149,6 @@ pnpm i # or npm i / yarn
 pnpm dev # http://localhost:3000
 ```
 
-On Vercel: set the same env vars; add Supabase URL/keys and OpenRouter key.
+On Vercel: set the same env vars; add Supabase URL/keys and OPENAI_API_KEY.
 
 
