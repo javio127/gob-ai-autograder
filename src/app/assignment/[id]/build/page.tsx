@@ -8,7 +8,9 @@ type Problem = { id: string; order: number; prompt_text: string; rubric_json: an
 
 export default function BuildPage() {
   const params = useParams<{ id: string }>();
-  const assignmentId = params.id;
+  // Guard against potential null/array types from useParams during build/static analysis
+  const rawId = (params as any)?.id;
+  const assignmentId = Array.isArray(rawId) ? (rawId[0] as string) : (rawId as string | undefined) || '';
   const [problems, setProblems] = useState<Problem[]>([]);
   const [promptText, setPromptText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,6 +20,7 @@ export default function BuildPage() {
   // Load problems on mount (and when assignment changes)
   useEffect(() => {
     async function load() {
+      if (!assignmentId) return;
       const { data, error } = await supabaseClient
         .from('problems')
         .select('id, order, prompt_text, rubric_json')
@@ -80,6 +83,7 @@ export default function BuildPage() {
 
   return (
     <div className="space-y-6">
+      {!assignmentId && <div>Loading…</div>}
       {/* Step indicator */}
       <div className="flex items-center gap-3 text-sm">
         <StepDot done>1</StepDot><span>Create</span>
