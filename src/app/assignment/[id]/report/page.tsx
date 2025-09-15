@@ -5,19 +5,22 @@ import ReportTable from '@/components/ReportTable';
 
 export default function ReportPage() {
   const params = useParams<{ id: string }>();
+  const rawId = (params as any)?.id;
+  const assignmentId = Array.isArray(rawId) ? (rawId[0] as string) : (rawId as string | undefined) || '';
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const res = await fetch(`/api/report?assignmentId=${params.id}`);
+      if (!assignmentId) return;
+      const res = await fetch(`/api/report?assignmentId=${assignmentId}`);
       const json = await res.json();
       setData(json);
       setLoading(false);
     }
     load();
-  }, [params.id]);
+  }, [assignmentId]);
 
   function downloadCSV() {
     if (!data) return;
@@ -34,7 +37,7 @@ export default function ReportPage() {
     URL.revokeObjectURL(url);
   }
 
-  if (loading) return <div>Loading report…</div>;
+  if (loading || !assignmentId) return <div>Loading report…</div>;
   if (!data) return <div>Report failed to load.</div>;
 
   return (
